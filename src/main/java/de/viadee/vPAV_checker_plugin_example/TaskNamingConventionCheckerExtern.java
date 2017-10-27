@@ -18,8 +18,8 @@ import de.viadee.bpm.vPAV.processing.model.data.CriticalityEnum;
 
 public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
 
-    public TaskNamingConventionCheckerExtern(final Rule rule) {
-        super(rule);
+    public TaskNamingConventionCheckerExtern(final Rule rule, final String path) {
+        super(rule, path);
     }
 
     /**
