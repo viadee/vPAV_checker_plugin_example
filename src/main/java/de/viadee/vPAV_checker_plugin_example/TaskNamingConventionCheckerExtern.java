@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.camunda.bpm.model.bpmn.instance.Task;
 
+import de.viadee.bpm.vPAV.BPMNScanner;
 import de.viadee.bpm.vPAV.config.model.ElementConvention;
 import de.viadee.bpm.vPAV.config.model.Rule;
 import de.viadee.bpm.vPAV.processing.ProcessingException;
@@ -18,8 +19,8 @@ import de.viadee.bpm.vPAV.processing.model.data.CriticalityEnum;
 
 public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
 
-    public TaskNamingConventionCheckerExtern(final Rule rule, final String path) {
-        super(rule, path);
+    public TaskNamingConventionCheckerExtern(final Rule rule, final BPMNScanner bpmnScanner) {
+        super(rule, bpmnScanner);
     }
 
     /**
