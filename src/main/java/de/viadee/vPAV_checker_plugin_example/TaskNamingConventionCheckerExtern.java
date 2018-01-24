@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.camunda.bpm.model.bpmn.instance.Task;
 
-import de.viadee.bpm.vPAV.BPMNScanner;
+import de.viadee.bpm.vPAV.BpmnScanner;
 import de.viadee.bpm.vPAV.config.model.ElementConvention;
 import de.viadee.bpm.vPAV.config.model.Rule;
 import de.viadee.bpm.vPAV.processing.ProcessingException;
@@ -19,7 +19,7 @@ import de.viadee.bpm.vPAV.processing.model.data.CriticalityEnum;
 
 public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
 
-    public TaskNamingConventionCheckerExtern(final Rule rule, final BPMNScanner bpmnScanner) {
+    public TaskNamingConventionCheckerExtern(final Rule rule, final BpmnScanner bpmnScanner) {
         super(rule, bpmnScanner);
     }
 
@@ -28,6 +28,7 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
      *
      * @return issues
      */
+    @Override
     public Collection<CheckerIssue> check(final BpmnElement element) {
         final Collection<CheckerIssue> issues = new ArrayList<CheckerIssue>();
 
@@ -45,16 +46,18 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
                 final Pattern pattern = Pattern.compile(patternString);
                 Matcher matcher = pattern.matcher(taskName);
                 if (!matcher.matches()) {
-                    issues.add(new CheckerIssue(rule.getName(), CriticalityEnum.WARNING,
+                    issues.add(new CheckerIssue(rule.getName(), rule.getRuleDescription(), CriticalityEnum.WARNING,
                             element.getProcessdefinition(), null, baseElement.getId(),
                             baseElement.getAttributeValue("name"), null, null, null,
-                            "task name '" + taskName + "' is against the naming convention"));
+                            "task name '" + taskName + "' is against the naming convention",
+                            elementConventions.iterator().next().getDescription()));
                 }
             } else {
                 issues.add(
-                        new CheckerIssue(rule.getName(), CriticalityEnum.ERROR, element.getProcessdefinition(),
+                        new CheckerIssue(rule.getName(), rule.getRuleDescription(), CriticalityEnum.ERROR,
+                                element.getProcessdefinition(),
                                 null, baseElement.getId(), baseElement.getAttributeValue("name"), null, null, null,
-                                "task name must be specified"));
+                                "task name must be specified", null));
             }
         }
         return issues;
