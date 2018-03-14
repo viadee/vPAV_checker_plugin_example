@@ -19,8 +19,21 @@ import de.viadee.bpm.vPAV.processing.model.data.CriticalityEnum;
 
 public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
 
+    private String patternString;
+
+    private String description;
+
     public TaskNamingConventionCheckerExtern(final Rule rule, final BpmnScanner bpmnScanner) {
         super(rule, bpmnScanner);
+
+        final Collection<ElementConvention> elementConventions = rule.getElementConventions();
+        if (elementConventions == null || elementConventions.size() < 1
+                || elementConventions.size() > 1) {
+            throw new ProcessingException(
+                    "task naming convention checker must have one element convention!");
+        }
+        patternString = elementConventions.iterator().next().getPattern();
+        description = elementConventions.iterator().next().getDescription();
     }
 
     /**
@@ -31,35 +44,35 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
     @Override
     public Collection<CheckerIssue> check(final BpmnElement element) {
         final Collection<CheckerIssue> issues = new ArrayList<CheckerIssue>();
-
         final BaseElement baseElement = element.getBaseElement();
         if (baseElement instanceof Task) {
-            final Collection<ElementConvention> elementConventions = rule.getElementConventions();
-            if (elementConventions == null || elementConventions.size() < 1
-                    || elementConventions.size() > 1) {
-                throw new ProcessingException(
-                        "task naming convention checker must have one element convention!");
-            }
-            final String patternString = elementConventions.iterator().next().getPattern();
             final String taskName = baseElement.getAttributeValue("name");
-            if (taskName != null && taskName.trim().length() > 0) {
-                final Pattern pattern = Pattern.compile(patternString);
-                Matcher matcher = pattern.matcher(taskName);
-                if (!matcher.matches()) {
-                    issues.add(new CheckerIssue(rule.getName(), rule.getRuleDescription(), CriticalityEnum.WARNING,
-                            element.getProcessdefinition(), null, baseElement.getId(),
-                            baseElement.getAttributeValue("name"), null, null, null,
-                            "task name '" + taskName + "' is against the naming convention",
-                            elementConventions.iterator().next().getDescription()));
+            boolean taskNameExists = taskName != null && taskName.trim().length() > 0;
+            if (taskNameExists) {
+                if (isTasknameInvalid(taskName)) {
+                    String message = "task name '" + taskName + "' is against the naming convention";
+                    issues.add(createIssue(element, baseElement, message, description, CriticalityEnum.WARNING));
                 }
             } else {
                 issues.add(
-                        new CheckerIssue(rule.getName(), rule.getRuleDescription(), CriticalityEnum.ERROR,
-                                element.getProcessdefinition(),
-                                null, baseElement.getId(), baseElement.getAttributeValue("name"), null, null, null,
-                                "task name must be specified", null));
+                        createIssue(element, baseElement, "task name must be specified", null, CriticalityEnum.ERROR));
             }
         }
         return issues;
+    }
+
+    private boolean isTasknameInvalid(final String taskName) {
+        final Pattern pattern = Pattern.compile(patternString);
+        Matcher matcher = pattern.matcher(taskName);
+        boolean b = !matcher.matches();
+        return b;
+    }
+
+    private CheckerIssue createIssue(final BpmnElement element, final BaseElement baseElement, String message,
+            String description, CriticalityEnum error) {
+        return new CheckerIssue(rule.getName(), rule.getRuleDescription(), error,
+                element.getProcessdefinition(),
+                null, baseElement.getId(), baseElement.getAttributeValue("name"), null, null, null,
+                message, description);
     }
 }
