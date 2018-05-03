@@ -9,9 +9,7 @@ import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.camunda.bpm.model.bpmn.instance.Task;
 
 import de.viadee.bpm.vPAV.BpmnScanner;
-import de.viadee.bpm.vPAV.config.model.ElementConvention;
 import de.viadee.bpm.vPAV.config.model.Rule;
-import de.viadee.bpm.vPAV.processing.ProcessingException;
 import de.viadee.bpm.vPAV.processing.checker.AbstractElementChecker;
 import de.viadee.bpm.vPAV.processing.model.data.BpmnElement;
 import de.viadee.bpm.vPAV.processing.model.data.CheckerIssue;
@@ -25,15 +23,6 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
 
     public TaskNamingConventionCheckerExtern(final Rule rule, final BpmnScanner bpmnScanner) {
         super(rule, bpmnScanner);
-
-        final Collection<ElementConvention> elementConventions = rule.getElementConventions();
-        if (elementConventions == null || elementConventions.size() < 1
-                || elementConventions.size() > 1) {
-            throw new ProcessingException(
-                    "task naming convention checker must have one element convention!");
-        }
-        patternString = elementConventions.iterator().next().getPattern();
-        description = elementConventions.iterator().next().getDescription();
     }
 
     /**
