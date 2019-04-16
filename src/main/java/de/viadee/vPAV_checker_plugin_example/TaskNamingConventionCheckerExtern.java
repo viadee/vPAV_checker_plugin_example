@@ -2,7 +2,6 @@ package de.viadee.vPAV_checker_plugin_example;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,6 +11,7 @@ import org.camunda.bpm.model.bpmn.instance.Task;
 import de.viadee.bpm.vPAV.BpmnScanner;
 import de.viadee.bpm.vPAV.config.model.ElementConvention;
 import de.viadee.bpm.vPAV.config.model.Rule;
+import de.viadee.bpm.vPAV.processing.ProcessingException;
 import de.viadee.bpm.vPAV.processing.checker.AbstractElementChecker;
 import de.viadee.bpm.vPAV.processing.model.data.BpmnElement;
 import de.viadee.bpm.vPAV.processing.model.data.CheckerIssue;
@@ -23,10 +23,19 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
 
     private String description;
 
-    private static Logger logger = Logger.getLogger(TaskNamingConventionCheckerExtern.class.getName());
+    // private static Logger logger = Logger.getLogger(TaskNamingConventionCheckerExtern.class.getName());
 
     public TaskNamingConventionCheckerExtern(final Rule rule, final BpmnScanner bpmnScanner) {
         super(rule, bpmnScanner);
+
+        final Collection<ElementConvention> elementConventions = rule.getElementConventions();
+        if (elementConventions == null || elementConventions.size() < 1
+                || elementConventions.size() > 1) {
+            throw new ProcessingException(
+                    "task naming convention checker must have one element convention!");
+        }
+        patternString = elementConventions.iterator().next().getPattern();
+        description = elementConventions.iterator().next().getDescription();
     }
 
     /**
@@ -55,13 +64,7 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
     }
 
     private boolean isTasknameInvalid(final String taskName) {
-        final Collection<ElementConvention> elementConventions = rule.getElementConventions();
-        if (elementConventions == null || elementConventions.size() < 1
-                || elementConventions.size() > 1) {
-            logger.warning("task naming convention checker must have one element convention!");
-        }
-        patternString = elementConventions.iterator().next().getPattern();
-        description = elementConventions.iterator().next().getDescription();
+
         final Pattern pattern = Pattern.compile(patternString);
         Matcher matcher = pattern.matcher(taskName);
         boolean b = !matcher.matches();
@@ -71,7 +74,7 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
     private CheckerIssue createIssue(final BpmnElement element, final BaseElement baseElement, String message,
             String description, CriticalityEnum error) {
         return new CheckerIssue(rule.getName(), rule.getRuleDescription(), error,
-                element.getProcessdefinition(),
+                element.getProcessDefinition(),
                 null, baseElement.getId(), baseElement.getAttributeValue("name"), null, null, null,
                 message, description);
     }

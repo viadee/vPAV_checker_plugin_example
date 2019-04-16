@@ -60,87 +60,85 @@ import de.viadee.bpm.vPAV.processing.model.data.CheckerIssue;
 
 public class ExternalCheckerTest {
 
-    private static final String BASE_PATH = "src/test/resources/";
+	private static final String BASE_PATH = "src/test/resources/";
 
-    private static ClassLoader cl;
+	private static ClassLoader cl;
 
-    private static Map<String, Rule> rules = new HashMap<String, Rule>();
+	private static Map<String, Rule> rules = new HashMap<String, Rule>();
 
-    @BeforeClass
-    public static void setup() throws MalformedURLException {
-        final File file = new File(".");
-        final String currentPath = file.toURI().toURL().toString();
-        final URL classUrl = new URL(currentPath + "src/test/java");
-        final URL[] classUrls = { classUrl };
-        cl = new URLClassLoader(classUrls);
-        RuntimeConfig.getInstance().setClassLoader(cl);
-        RuntimeConfig.getInstance().setTest(true);
-        RuntimeConfig.getInstance().getResource("en_US");
-        createRule();
-    }
+	@BeforeClass
+	public static void setup() throws MalformedURLException {
+		final File file = new File(".");
+		final String currentPath = file.toURI().toURL().toString();
+		final URL classUrl = new URL(currentPath + "src/test/java");
+		final URL[] classUrls = { classUrl };
+		cl = new URLClassLoader(classUrls);
+		RuntimeConfig.getInstance().setClassLoader(cl);
+		RuntimeConfig.getInstance().setTest(true);
+		RuntimeConfig.getInstance().getResource("en_US");
+		createRule();
+	}
 
-    /**
-     * Case: Correct BoundaryErrorEvent with corresponding ErrorCodes
-     *
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
-     * @throws ConfigItemNotFoundException
-     * @throws XPathExpressionException
-     */
-    @Test
-    public void testExternalChecker()
-            throws ParserConfigurationException, SAXException, IOException, ConfigItemNotFoundException {
+	/**
+	 * Case: Correct BoundaryErrorEvent with corresponding ErrorCodes
+	 *
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws ParserConfigurationException
+	 * @throws ConfigItemNotFoundException
+	 * @throws XPathExpressionException
+	 */
+	@Test
+	public void testExternalChecker()
+			throws ParserConfigurationException, SAXException, IOException, ConfigItemNotFoundException {
 
-        final String PATH = BASE_PATH + "ExternalChecker.bpmn";
+		final String PATH = BASE_PATH + "ExternalChecker.bpmn";
 
-        Collection<ElementChecker> cElChecker = CheckerFactory.createCheckerInstances(rules, null,
-                new BpmnScanner(PATH));
+		CheckerFactory checkerFactory = new CheckerFactory();
 
-        // parse bpmn model
-        final Collection<CheckerIssue> issues = new ArrayList<CheckerIssue>();
+		Collection<ElementChecker> cElChecker = checkerFactory.createCheckerInstances(rules, null,
+				new BpmnScanner(PATH), null);
 
-        // parse bpmn model
-        final BpmnModelInstance modelInstance = Bpmn.readModelFromFile(new File(PATH));
+		// parse bpmn model
+		final Collection<CheckerIssue> issues = new ArrayList<CheckerIssue>();
 
-        final Collection<BaseElement> baseElements = modelInstance
-                .getModelElementsByType(BaseElement.class);
+		// parse bpmn model
+		final BpmnModelInstance modelInstance = Bpmn.readModelFromFile(new File(PATH));
 
-        for (BaseElement baseElement : baseElements) {
-            final BpmnElement element = new BpmnElement(PATH, baseElement);
-            for (ElementChecker checker : cElChecker) {
-                issues.addAll(checker.check(element));
-            }
+		final Collection<BaseElement> baseElements = modelInstance.getModelElementsByType(BaseElement.class);
 
-        }
+		for (BaseElement baseElement : baseElements) {
+			final BpmnElement element = new BpmnElement(PATH, baseElement);
+			for (ElementChecker checker : cElChecker) {
+				issues.addAll(checker.check(element));
+			}
 
-        if (issues.size() != 1) {
-            Assert.fail("Incorrect model should generate an issue");
-        }
+		}
 
-    }
+		if (issues.size() != 1) {
+			Assert.fail("Incorrect model should generate an issue");
+		}
 
-    private static void createRule() {
+	}
 
-        final Map<String, Setting> settings = new HashMap<String, Setting>();
-        final Setting setting = new Setting("external_Location", null, null, null, true,
-                "de.viadee.vPAV_checker_plugin_example");
+	private static void createRule() {
 
-        settings.put("external_Location", setting);
+		final Map<String, Setting> settings = new HashMap<String, Setting>();
+		final Setting setting = new Setting("external_Location", null, null, null, true,
+				"de.viadee.vPAV_checker_plugin_example");
 
-        final Collection<ElementConvention> elementConventions = new ArrayList<ElementConvention>();
+		settings.put("external_Location", setting);
 
-        final ElementConvention elementConvention1 = new ElementConvention("convention", null, null,
-                "[A-ZÄÖÜ][a-zäöü\\-\\s]+");
-        final ElementConvention elementConvention2 = new ElementConvention("convention", null, null,
-                "[A-ZÄÖÜ]");
+		final Collection<ElementConvention> elementConventions = new ArrayList<ElementConvention>();
 
-        elementConventions.add(elementConvention1);
-        elementConventions.add(elementConvention2);
+		final ElementConvention elementConvention = new ElementConvention("convention", null,
+				"Starts with a capital letter followed by letters, hyphens or spaces.", "[A-ZÄÖÜ][a-zäöü\\-\\s]+");
 
-        final Rule rule = new Rule("TaskNamingConventionCheckerExtern", true, null, settings, elementConventions, null);
+		elementConventions.add(elementConvention);
 
-        rules.put("TaskNamingConventionCheckerExtern", rule);
-    }
+		final Rule rule = new Rule("TaskNamingConventionCheckerExtern", true, null, settings, elementConventions, null);
+
+		rules.put("TaskNamingConventionCheckerExtern", rule);
+	}
 
 }
