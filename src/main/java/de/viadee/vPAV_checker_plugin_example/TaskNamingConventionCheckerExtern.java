@@ -1,21 +1,20 @@
 package de.viadee.vPAV_checker_plugin_example;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.camunda.bpm.model.bpmn.instance.BaseElement;
-import org.camunda.bpm.model.bpmn.instance.Task;
-
 import de.viadee.bpm.vPAV.BpmnScanner;
 import de.viadee.bpm.vPAV.config.model.ElementConvention;
 import de.viadee.bpm.vPAV.config.model.Rule;
 import de.viadee.bpm.vPAV.processing.ProcessingException;
 import de.viadee.bpm.vPAV.processing.checker.AbstractElementChecker;
-import de.viadee.bpm.vPAV.processing.model.data.BpmnElement;
+import de.viadee.bpm.vPAV.processing.code.flow.BpmnElement;
 import de.viadee.bpm.vPAV.processing.model.data.CheckerIssue;
 import de.viadee.bpm.vPAV.processing.model.data.CriticalityEnum;
+import org.camunda.bpm.model.bpmn.instance.BaseElement;
+import org.camunda.bpm.model.bpmn.instance.Task;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
 
@@ -45,7 +44,7 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
      */
     @Override
     public Collection<CheckerIssue> check(final BpmnElement element) {
-        final Collection<CheckerIssue> issues = new ArrayList<CheckerIssue>();
+        final Collection<CheckerIssue> issues = new ArrayList<>();
         final BaseElement baseElement = element.getBaseElement();
         if (baseElement instanceof Task) {
             final String taskName = baseElement.getAttributeValue("name");

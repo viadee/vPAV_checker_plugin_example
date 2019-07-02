@@ -31,6 +31,27 @@ package de.viadee.vPAV_checker_plugin_example;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+import de.viadee.bpm.vPAV.BpmnScanner;
+import de.viadee.bpm.vPAV.RuntimeConfig;
+import de.viadee.bpm.vPAV.config.model.ElementConvention;
+import de.viadee.bpm.vPAV.config.model.Rule;
+import de.viadee.bpm.vPAV.config.model.Setting;
+import de.viadee.bpm.vPAV.processing.ConfigItemNotFoundException;
+import de.viadee.bpm.vPAV.processing.checker.CheckerFactory;
+import de.viadee.bpm.vPAV.processing.checker.ElementChecker;
+import de.viadee.bpm.vPAV.processing.code.flow.BpmnElement;
+import de.viadee.bpm.vPAV.processing.model.data.CheckerIssue;
+import org.camunda.bpm.model.bpmn.Bpmn;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.instance.BaseElement;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -41,35 +62,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
-
-import org.camunda.bpm.model.bpmn.Bpmn;
-import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.camunda.bpm.model.bpmn.instance.BaseElement;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.xml.sax.SAXException;
-
-import de.viadee.bpm.vPAV.BpmnScanner;
-import de.viadee.bpm.vPAV.RuntimeConfig;
-import de.viadee.bpm.vPAV.config.model.ElementConvention;
-import de.viadee.bpm.vPAV.config.model.Rule;
-import de.viadee.bpm.vPAV.config.model.Setting;
-import de.viadee.bpm.vPAV.processing.ConfigItemNotFoundException;
-import de.viadee.bpm.vPAV.processing.checker.CheckerFactory;
-import de.viadee.bpm.vPAV.processing.checker.ElementChecker;
-import de.viadee.bpm.vPAV.processing.model.data.BpmnElement;
-import de.viadee.bpm.vPAV.processing.model.data.CheckerIssue;
-
 public class ExternalCheckerTest {
 
 	private static final String BASE_PATH = "src/test/resources/";
 
 	private static ClassLoader cl;
 
-	private static Map<String, Rule> rules = new HashMap<String, Rule>();
+	private static Map<String, Map<String, Rule>> rules = new HashMap<>();
 
 	@BeforeClass
 	public static void setup() throws MalformedURLException {
@@ -105,7 +104,7 @@ public class ExternalCheckerTest {
 				new BpmnScanner(PATH), null);
 
 		// parse bpmn model
-		final Collection<CheckerIssue> issues = new ArrayList<CheckerIssue>();
+		final Collection<CheckerIssue> issues = new ArrayList<>();
 
 		// parse bpmn model
 		final BpmnModelInstance modelInstance = Bpmn.readModelFromFile(new File(PATH));
@@ -113,28 +112,25 @@ public class ExternalCheckerTest {
 		final Collection<BaseElement> baseElements = modelInstance.getModelElementsByType(BaseElement.class);
 
 		for (BaseElement baseElement : baseElements) {
-			final BpmnElement element = new BpmnElement(PATH, baseElement);
+			final BpmnElement element = new BpmnElement(PATH, baseElement, null, null);
 			for (ElementChecker checker : cElChecker) {
 				issues.addAll(checker.check(element));
 			}
 
 		}
 
-		if (issues.size() != 1) {
-			Assert.fail("Incorrect model should generate an issue");
-		}
-
+		Assert.assertEquals("Incorrect model should generate an issue", 1, issues.size());
 	}
 
 	private static void createRule() {
 
-		final Map<String, Setting> settings = new HashMap<String, Setting>();
+		final Map<String, Setting> settings = new HashMap<>();
 		final Setting setting = new Setting("external_Location", null, null, null, true,
 				"de.viadee.vPAV_checker_plugin_example");
 
 		settings.put("external_Location", setting);
 
-		final Collection<ElementConvention> elementConventions = new ArrayList<ElementConvention>();
+		final Collection<ElementConvention> elementConventions = new ArrayList<>();
 
 		final ElementConvention elementConvention = new ElementConvention("convention", null,
 				"Starts with a capital letter followed by letters, hyphens or spaces.", "[A-ZÄÖÜ][a-zäöü\\-\\s]+");
@@ -142,8 +138,10 @@ public class ExternalCheckerTest {
 		elementConventions.add(elementConvention);
 
 		final Rule rule = new Rule("TaskNamingConventionCheckerExtern", true, null, settings, elementConventions, null);
+		HashMap<String, Rule> ruleMap = new HashMap<>();
+		ruleMap.put("TaskNamingConventionCheckerExtern", rule);
 
-		rules.put("TaskNamingConventionCheckerExtern", rule);
+		rules.put("TaskNamingConventionCheckerExtern", ruleMap);
 	}
 
 }
