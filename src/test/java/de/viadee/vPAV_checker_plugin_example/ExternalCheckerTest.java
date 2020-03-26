@@ -36,10 +36,10 @@ import de.viadee.bpm.vPAV.BpmnScanner;
 import de.viadee.bpm.vPAV.RuntimeConfig;
 import de.viadee.bpm.vPAV.config.model.ElementConvention;
 import de.viadee.bpm.vPAV.config.model.Rule;
+import de.viadee.bpm.vPAV.config.model.RuleSet;
 import de.viadee.bpm.vPAV.config.model.Setting;
-import de.viadee.bpm.vPAV.processing.ConfigItemNotFoundException;
+import de.viadee.bpm.vPAV.processing.checker.AbstractElementChecker;
 import de.viadee.bpm.vPAV.processing.checker.CheckerFactory;
-import de.viadee.bpm.vPAV.processing.checker.ElementChecker;
 import de.viadee.bpm.vPAV.processing.code.flow.BpmnElement;
 import de.viadee.bpm.vPAV.processing.model.data.CheckerIssue;
 import org.camunda.bpm.model.bpmn.Bpmn;
@@ -48,12 +48,8 @@ import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -69,6 +65,8 @@ public class ExternalCheckerTest {
 	private static ClassLoader cl;
 
 	private static Map<String, Map<String, Rule>> rules = new HashMap<>();
+
+	private static RuleSet ruleSet;
 
 	@BeforeClass
 	public static void setup() throws MalformedURLException {
@@ -86,22 +84,16 @@ public class ExternalCheckerTest {
 	/**
 	 * Case: Correct BoundaryErrorEvent with corresponding ErrorCodes
 	 *
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
-	 * @throws ConfigItemNotFoundException
-	 * @throws XPathExpressionException
 	 */
 	@Test
-	public void testExternalChecker()
-			throws ParserConfigurationException, SAXException, IOException, ConfigItemNotFoundException {
+	public void testExternalChecker() {
 
 		final String PATH = BASE_PATH + "ExternalChecker.bpmn";
 
 		CheckerFactory checkerFactory = new CheckerFactory();
 
-		Collection<ElementChecker> cElChecker = checkerFactory.createCheckerInstances(rules, null,
-				new BpmnScanner(PATH), null);
+		Collection[] cElChecker = checkerFactory.createCheckerInstances(ruleSet, null,
+				new BpmnScanner(PATH), null, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
 
 		// parse bpmn model
 		final Collection<CheckerIssue> issues = new ArrayList<>();
@@ -113,10 +105,12 @@ public class ExternalCheckerTest {
 
 		for (BaseElement baseElement : baseElements) {
 			final BpmnElement element = new BpmnElement(PATH, baseElement, null, null);
-			for (ElementChecker checker : cElChecker) {
-				issues.addAll(checker.check(element));
-			}
 
+			for (int i = 0; i < cElChecker.length; i++) {
+				for (int j = 0; j < cElChecker[i].size(); j++) {
+					issues.addAll(((AbstractElementChecker) ((ArrayList) cElChecker[i]).get(j)).check(element));
+				}
+			}
 		}
 
 		Assert.assertEquals("Incorrect model should generate an issue", 1, issues.size());
@@ -142,6 +136,8 @@ public class ExternalCheckerTest {
 		ruleMap.put("TaskNamingConventionCheckerExtern", rule);
 
 		rules.put("TaskNamingConventionCheckerExtern", ruleMap);
+
+		ruleSet = new RuleSet(rules, new HashMap<>(), false);
 	}
 
 }

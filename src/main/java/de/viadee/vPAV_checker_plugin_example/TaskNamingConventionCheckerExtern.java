@@ -28,8 +28,7 @@ public class TaskNamingConventionCheckerExtern extends AbstractElementChecker {
         super(rule, bpmnScanner);
 
         final Collection<ElementConvention> elementConventions = rule.getElementConventions();
-        if (elementConventions == null || elementConventions.size() < 1
-                || elementConventions.size() > 1) {
+        if (elementConventions == null || elementConventions.size() != 1) {
             throw new ProcessingException(
                     "task naming convention checker must have one element convention!");
         }
